@@ -1,5 +1,5 @@
-import React from 'react';
 import Button from 'components/Button';
+import React from 'react';
 
 const Confirm = (props) => {
   return (
@@ -9,7 +9,7 @@ const Confirm = (props) => {
         <Button onClick={props.onCancel} danger>
           Cancel
         </Button>
-        <Button onClick={props.onConfirm} danger>
+        <Button onClick={props.onConfirm} danger data-testid="confirm">
           Confirm
         </Button>
       </section>

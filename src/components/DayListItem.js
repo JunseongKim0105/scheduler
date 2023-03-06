@@ -1,34 +1,31 @@
 import React from 'react';
-import 'components/DayListItem.scss';
 import classNames from 'classnames';
+import 'components/DayListItem.scss';
 
 export default function DayListItem(props) {
-  const formatSpots = (num) => {
-    let result = '';
-    if (num === 0) {
-      result = 'no spots remaining';
-    } else if (num === 1) {
-      result = '1 spot remaining';
-    } else {
-      result = num + ' spots remaining';
-    }
-    return result;
-  };
-
-  const dayClass = classNames('day', {
-    'day-list__item': true,
+  // Render specific styling for selected day
+  const dayClass = classNames('day-list__item', {
     'day-list__item--selected': props.selected,
-    'day-list__item--full': props.spots === 0,
+    'day-list__item--full': !props.spots,
   });
+
+  // Format spots according to the number (0, 1, or more)
+  const formatSpots = () =>
+    !props.spots
+      ? 'no spots remaining'
+      : props.spots === 1
+      ? '1 spot remaining'
+      : `${props.spots} spots remaining`;
 
   return (
     <li
       className={dayClass}
-      data-testid="day"
       onClick={() => props.setDay(props.name)}
+      selected={props.selected}
+      data-testid="day"
     >
       <h2 className="text--regular">{props.name}</h2>
-      <h3 className="text--light">{formatSpots(props.spots)}</h3>
+      <h3 className="text--light">{formatSpots()}</h3>
     </li>
   );
 }

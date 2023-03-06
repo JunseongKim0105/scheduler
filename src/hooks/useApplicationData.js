@@ -1,74 +1,65 @@
-import { useState, useEffect } from 'react';
-
+import React, { useEffect, useReducer } from 'react';
 import axios from 'axios';
+import reducer, {
+  SET_APPLICATION_DATA,
+  SET_DAY,
+  SET_INTERVIEW,
+} from '../reducers/application';
 
-export default function useApplicationData() {
-  const [state, setState] = useState({
+const url = process.env.REACT_APP_WEBSOCKET_URL || 'wss://example.com';
+
+const useApplicationData = () => {
+  const [state, dispatch] = useReducer(reducer, {
     day: 'Monday',
     days: [],
     appointments: {},
     interviewers: {},
   });
 
-  const setDay = (day) => setState({ ...state, day });
-
-  //pure function, doesnt use state
-  const updateSpots = (day, days, appointments) => {
-    let spots = 0;
-
-    const dayObj = days.find((d) => d.name === day);
-
-    for (const appointmentId of dayObj.appointments) {
-      const appointment = appointments[appointmentId];
-      if (!appointment.interview) {
-        spots++;
-      }
-    }
-    dayObj.spots = spots;
-    return days;
+  const bookInterview = (id, interview) => {
+    return axios.put(`/api/appointments/${id}`, { interview });
   };
 
-  function bookInterview(id, interview) {
-    const appointment = {
-      ...state.appointments[id],
-      interview: { ...interview },
-    };
+  const cancelInterview = (id) => {
+    return axios.delete(`/api/appointments/${id}`);
+  };
 
-    const appointments = {
-      ...state.appointments,
-      [id]: appointment,
-    };
+  const setDay = (day) => dispatch({ type: SET_DAY, payload: { day } });
 
-    return axios.put(`/api/appointments/${id}`, { interview }).then(() => {
-      const days = updateSpots(state.day, state.days, appointments);
-      setState({ ...state, appointments, days });
-    });
-  }
-
-  function cancelInterview(id) {
-    const appointments = state.appointments;
-    const appointment = appointments[id];
-
-    return axios.delete(`/api/appointments/${id}`).then(() => {
-      appointment.interview = null;
-      const days = updateSpots(state.day, state.days, appointments);
-      setState({ ...state, appointments, days });
-    });
-  }
-
+  // Get initial data and set up web socket
   useEffect(() => {
     Promise.all([
       axios.get('/api/days'),
       axios.get('/api/appointments'),
       axios.get('/api/interviewers'),
     ]).then((all) => {
-      setState((prev) => ({
-        ...prev,
-        days: all[0].data,
-        appointments: all[1].data,
-        interviewers: all[2].data,
-      }));
+      dispatch({
+        type: SET_APPLICATION_DATA,
+        payload: {
+          days: all[0].data,
+          appointments: all[1].data,
+          interviewers: all[2].data,
+        },
+      });
     });
+
+    const exampleSocket = new WebSocket(url, 'protocolOne');
+    exampleSocket.onopen = (event) => {
+      exampleSocket.send('ping');
+    };
+    exampleSocket.onmessage = (event) => {
+      const updatedData = JSON.parse(event.data);
+      if (updatedData.type === SET_INTERVIEW) {
+        dispatch({
+          type: SET_INTERVIEW,
+          payload: { id: updatedData.id, interview: updatedData.interview },
+        });
+      }
+    };
+
+    return () => {
+      exampleSocket.close();
+    };
   }, []);
 
   return {
@@ -77,4 +68,6 @@ export default function useApplicationData() {
     bookInterview,
     cancelInterview,
   };
-}
+};
+
+export default useApplicationData;

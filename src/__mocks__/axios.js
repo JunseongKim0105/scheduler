@@ -52,8 +52,10 @@ const fixtures = {
     },
   },
 };
+
+// Mock GET, PUT, and DELETE request
 export default {
-  defaults: { baseURL: `http://localhost:8001` },
+  defaults: { baseURL: '' },
   get: jest.fn((url) => {
     if (url === '/api/days') {
       return Promise.resolve({
@@ -62,18 +64,14 @@ export default {
         data: fixtures.days,
       });
     }
-
     if (url === '/api/appointments') {
-      /* Resolve appointments data */
       return Promise.resolve({
         status: 200,
         statusText: 'OK',
         data: fixtures.appointments,
       });
     }
-
     if (url === '/api/interviewers') {
-      /* Resolve interviewers data */
       return Promise.resolve({
         status: 200,
         statusText: 'OK',
@@ -81,25 +79,14 @@ export default {
       });
     }
   }),
-
   put: jest.fn((url) => {
-    return Promise.resolve({
-      status: 200,
-      statusText: 'OK',
-    });
+    if (url.includes('/api/appointments/')) {
+      return Promise.resolve({ status: 204, statusText: 'No Content' });
+    }
   }),
-
   delete: jest.fn((url) => {
-    return Promise.resolve({
-      status: 200,
-      statusText: 'OK',
-    });
-  }),
-
-  delete: jest.fn((url) => {
-    return Promise.reject({
-      status: 400,
-      statusText: 'OK',
-    });
+    if (url.includes('/api/appointments/')) {
+      return Promise.resolve({ status: 204, statusText: 'No Content' });
+    }
   }),
 };
